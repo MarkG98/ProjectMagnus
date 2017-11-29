@@ -8,7 +8,7 @@ kg = UNITS.kilogram
 degree = UNITS.degree
 radian = UNITS.radian
 
-hero_height = 1.5
+hero_height = 2
 
 condition = Condition(x = 2 * m,
                       y = (365.76 + hero_height) * m,
@@ -18,8 +18,8 @@ condition = Condition(x = 2 * m,
                       rho = 1.2 * kg/m**3,
                       C_d = 0.3,
                       angle = -60 * degree,
-                      velocity = 70/2 * m/s,
-                      w = 40/2 * radian/s,
+                      velocity = 50 * m/s,
+                      w = 40 * radian/s,
                       duration = 15 * s)
 
 def make_system(condition):
@@ -42,13 +42,10 @@ def slope_func(state, t, system):
 
     # creates unit vector in direction of the magus force
     x, y = pol2cart(v_ball.angle - (pi / 2) * radian, 1)
-    magnus_direction = Vector(x, y, 0)
-
-    w_vector = Vector(0, 0, condition.w)
+    magnus_direction = Vector(x, y)
 
     # calculates acceleration due to the magnus force
-    #f_magnus = (pi ** 2) * ((condition.diameter / 2) ** 3) * rho * v_ball.mag * condition.w * magnus_direction.hat()
-    f_magnus = ((pi ** 2) * ((condition.diameter / 2) ** 3) * rho) * w_vector.cross(v_ball)
+    f_magnus = (pi ** 2) * ((condition.diameter / 2) ** 3) * rho * v_ball.mag * condition.w * magnus_direction.hat()
     a_magnus = f_magnus / mass
 
     # calculates acceleration due to drag
@@ -70,6 +67,5 @@ plt.xlabel('x (m)')
 plt.ylabel('y (m)')
 plt.title('Ball flight Path')
 plt.grid(True)
-plt.axvline(x = 2, color='r')
 plt.plot(xs, ys)
 plt.show()
