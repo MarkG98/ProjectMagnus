@@ -51,17 +51,9 @@ def slope_func(state, t, system):
     f_magnus = ((pi ** 2) * ((condition.diameter / 2) ** 3) * rho) * w_vector.cross(v_ball)
     a_magnus = f_magnus / mass
 
-    unit = v_ball.cross(w_vector)
-    unit = unit.hat()
-    
-    x, y, z = pol2cart(unit.angle, a_magnus)
-    a_magnus = Vector(x, y, z)
-
     # calculates acceleration due to drag
     f_drag = -rho * v_ball.mag * v_ball * C_d * (area / 2)
     a_drag = f_drag / mass
-    x, y, z = pol2cart(v_ball.angle - (pi * radian), a_drag)
-    a_drag = Vector(x, y, z)
 
     a_total = a_grav + a_magnus + a_drag
 
