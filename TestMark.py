@@ -8,7 +8,7 @@ kg = UNITS.kilogram
 degree = UNITS.degree
 radian = UNITS.radian
 
-hero_height = 1.5
+hero_height = 1.5;
 
 condition = Condition(x = 2 * m,
                       y = (365.76 + hero_height) * m,
