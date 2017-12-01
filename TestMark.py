@@ -18,8 +18,8 @@ condition = Condition(x = 2 * m,
                       rho = 1.2 * kg/m**3,
                       C_d = 0.3,
                       angle = -10 * degree,
-                      velocity = 70 * m/s,
-                      w = 61.4674989621 * radian/s,
+                      velocity = 45 * m/s,
+                      w = 33.4425156891 * radian/s,
                       duration = 15 * s)
 
 def make_system(condition):
@@ -63,13 +63,6 @@ run_odeint(baseballSystem, slope_func)
 xs = baseballSystem.results.x
 ys = baseballSystem.results.y
 
-def error_func(w):
-  condition.set(w = w * radian/s)
-  baseballSystem = make_system(condition)
-  run_odeint(baseballSystem, slope_func)
-  T = interpolate(baseballSystem.results.y)
-  return T(0)
-
 def sweep_func():
   for angle in linspace(-10,-80,2):
     condition.set(angle=angle * degree)
@@ -102,15 +95,51 @@ def error_func(w):
   condition.set(w = w * radian/s)
   baseballSystem = make_system(condition)
   run_odeint(baseballSystem, slope_func)
-  T = interpolate(baseballSystem.results.x)
+  X = interpolate(baseballSystem.results.x)
   t_land = interpolate_range(baseballSystem.results.y, 0)
-  return T(t_land)
+  return X(t_land) + 0.78
+
+def heightAtDoor(system):
+    xs = system.results.x
+    ys = system.results.y
+
+    t_maxRange = xs.idxmax()
+
+    finalDescent = xs.loc[t_maxRange:]
+    T = interp_inverse(finalDescent)
+    t_throughDoor = T(2)
+
+    Y = interpolate(ys, kind='cubic')
+    return Y(t_throughDoor)
 
 
 #value = error_func(w = 67, interpolate_range = interpolate_range)
 solution = fsolve(error_func, 67)
 w_ideal = solution[0]
 print(w_ideal)
+
+angle_array = linspace(0, 60, 13)
+
+def angleSweep(system, angle_array):
+    for angle in angle_array:
+        condition.set(angle = angle * degree)
+        solution = fsolve(error_func, 60)
+        spinForButt = solution[0]
+
+        condition.set(w = spinForButt * radian/s)
+        system = make_system(condition)
+        run_odeint(system, slope_func)
+
+        height = heightAtDoor(system)
+
+        print("angle = ", angle, "w = ", condition.w, "height at door = ", height, '\n')
+
+angleSweep(baseballSystem, angle_array)
+
+
+
+
+
 
 plt.xlabel('x (m)')
 plt.ylabel('y (m)')
