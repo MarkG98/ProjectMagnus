@@ -17,9 +17,9 @@ condition = Condition(x = 2 * m,
                       diameter = 73e-3 * m,
                       rho = 1.2 * kg/m**3,
                       C_d = 0.3,
-                      angle = -10 * degree,
-                      velocity = 70 * m/s,
-                      w = 67 * radian/s,
+                      angle = 7 * degree,
+                      velocity = 95 * m/s,
+                      w = 70.97764981402517 * radian/s,
                       duration = 15 * s)
 
 def make_system(condition):
@@ -44,7 +44,7 @@ def slope_func(state, t, system):
     x, y = pol2cart(v_ball.angle - (pi / 2) * radian, 1)
     magnus_direction = Vector(x, y, 0)
 
-    w_vector = Vector(0, 0, -condition.w)
+    w_vector = Vector(0, 0, - condition.w)
 
     # calculates acceleration due to the magnus force
     #f_magnus = (pi ** 2) * ((condition.diameter / 2) ** 3) * rho * v_ball.mag * condition.w * magnus_direction.hat()
@@ -59,15 +59,7 @@ def slope_func(state, t, system):
 
     return v_ball.x, v_ball.y, a_total.x, a_total.y
 
-#slope_func(baseballSystem.init, 0, baseballSystem)
-def error_func(w):
-  condition.set(w = w)
-  baseballSystem = make_system(condition)
-  run_odeint(baseballSystem,slope_func)
-  T = interpolate(baseballSystem.results.y)
-  return T(0)
 run_odeint(baseballSystem, slope_func)
-print(baseballSystem.results)
 xs = baseballSystem.results.x
 ys = baseballSystem.results.y
 
@@ -90,19 +82,80 @@ def sweep_func():
         plt.grid(True)
         plt.axvline(x = 2, color='r')
         plt.plot(xs, ys)
-  plt.show()
-#sweep_func()
+        plt.show()
+
 def interpolate_range(results,y_value):
-  ys = results.y
+  ys = results
   descent = ys
   T = interp_inverse(descent)
   t_land = T(y_value)
-  #X = interpolate(xs, kind = 'cubic')
   return t_land
-#print("hi")
-#time = interpolate_range(baseballSystem.results,2)
-#print(time)
-#print(ys[time])
+
+def error_func(w):
+  condition.set(w = w * radian/s)
+  baseballSystem = make_system(condition)
+  run_odeint(baseballSystem, slope_func)
+  X = interpolate(baseballSystem.results.x)
+  t_land = interpolate_range(baseballSystem.results.y, 0.78)
+  return X(t_land)
+
+def heightAtDoor(system):
+    xs = system.results.x
+    ys = system.results.y
+
+    t_maxRange = xs.idxmax()
+
+    finalDescent = xs.loc[t_maxRange:]
+    T = interp_inverse(finalDescent)
+    t_throughDoor = T(2)
+
+    Y = interpolate(ys, kind='cubic')
+    return Y(t_throughDoor)
+
+
+#value = error_func(w = 67, interpolate_range = interpolate_range)
+#solution = fsolve(error_func, 67)
+#w_ideal = solution[0]
+#print(w_ideal)
+
+angle_array = linspace(7.5, 6.5, 11)
+
+def angleSweep(system, angle_array):
+    for angle in angle_array:
+        condition.set(angle = angle * degree)
+        solution = fsolve(error_func, 60)
+        spinForButt = solution[0]
+
+        condition.set(w = spinForButt * radian/s)
+        system = make_system(condition)
+        run_odeint(system, slope_func)
+
+        height = heightAtDoor(system)
+
+        print("angle = ", angle, "w = ", condition.w, "height at door = ", height, '\n')
+
+#angleSweep(baseballSystem, angle_array)
+velocity_array = linspace(94,96,11)
+def velocitySweep(system,velocity_array):
+  for velocity in velocity_array:
+        condition.set(velocity = velocity * m/s)
+        solution = fsolve(error_func, 60)
+        spinForButt = solution[0]
+
+        condition.set(w = spinForButt * radian/s)
+        system = make_system(condition)
+        run_odeint(system, slope_func)
+
+        height = heightAtDoor(system)
+
+        print("velocity = ", velocity, "w = ", condition.w, "height at door = ", height, '\n')
+#velocitySweep(baseballSystem,velocity_array)
+
+
+
+
+
+
 plt.xlabel('x (m)')
 plt.ylabel('y (m)')
 plt.title('Ball flight Path')
