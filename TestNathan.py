@@ -151,11 +151,6 @@ def velocitySweep(system,velocity_array):
         print("velocity = ", velocity, "w = ", condition.w, "height at door = ", height, '\n')
 #velocitySweep(baseballSystem,velocity_array)
 
-
-
-
-
-
 plt.xlabel('x (m)')
 plt.ylabel('y (m)')
 plt.title('Ball flight Path')
