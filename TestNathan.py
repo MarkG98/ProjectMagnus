@@ -10,7 +10,7 @@ radian = UNITS.radian
 
 hero_height = 1.5
 
-condition = Condition(x = 2 * m,
+"""condition = Condition(x = 2 * m,
                       y = (365.76 + hero_height) * m,
                       g = 9.8 * m/s**2,
                       mass = 145e-3 * kg,
@@ -20,7 +20,18 @@ condition = Condition(x = 2 * m,
                       angle = 7 * degree,
                       velocity = 95 * m/s,
                       w = 70.97764981402517 * radian/s,
-                      duration = 15 * s)
+                      duration = 15 * s)"""
+condition = Condition(x = 2,
+                      y = (365.76 + hero_height),
+                      g = 9.8,
+                      mass = 145e-3,
+                      diameter = 73e-3,
+                      rho = 1.2,
+                      C_d = 0.3,
+                      angle = 7,
+                      velocity = 95,
+                      w = 70.97764981402517,
+                      duration = 15)
 
 def make_system(condition):
     theta = np.deg2rad(condition.angle)
@@ -65,9 +76,11 @@ ys = baseballSystem.results.y
 
 def sweep_func():
   for angle in linspace(-10,-80,2):
-    condition.set(angle=angle * degree)
+    """condition.set(angle=angle * degree)"""
+    condition.set(angle=angle)
     for velocity in linspace(30,150,2):
-      condition.set(velocity=velocity* m/s)
+      """condition.set(velocity=velocity* m/s)"""
+      condition.set(velocity=velocity)
       for w in linspace(20,120,2):
         condition.set(w=w* radian/s)
         baseballSystem = make_system(condition)
@@ -92,7 +105,8 @@ def interpolate_range(results,y_value):
   return t_land
 
 def error_func(w):
-  condition.set(w = w * radian/s)
+  """condition.set(w = w * radian/s)"""
+  condition.set(w = w)
   baseballSystem = make_system(condition)
   run_odeint(baseballSystem, slope_func)
   X = interpolate(baseballSystem.results.x)
@@ -118,7 +132,7 @@ def heightAtDoor(system):
 #w_ideal = solution[0]
 #print(w_ideal)
 
-angle_array = linspace(7.5, 6.5, 11)
+angle_array = linspace(6.5, 7.5, 4)
 
 def angleSweep(system, angle_array):
     for angle in angle_array:
@@ -136,25 +150,43 @@ def angleSweep(system, angle_array):
 
 #angleSweep(baseballSystem, angle_array)
 velocity_array = linspace(94,96,11)
-def velocitySweep(system,velocity_array):
-  for velocity in velocity_array:
-        condition.set(velocity = velocity * m/s)
-        solution = fsolve(error_func, 60)
-        spinForButt = solution[0]
+def velocitySweep(system,velocity_array, angle_array):
+    for angle in angle_array:
+        heights = []
+        condition.set(angle=angle)
+        for velocity in velocity_array:
+            """condition.set(velocity = velocity * m/s)"""
+            condition.set(velocity = velocity)
+            solution = fsolve(error_func, 60)
+            spinForButt = solution[0]
 
-        condition.set(w = spinForButt * radian/s)
-        system = make_system(condition)
-        run_odeint(system, slope_func)
+            """condition.set(w = spinForButt * radian/s)"""
+            condition.set(w = spinForButt)
+            system = make_system(condition)
+            run_odeint(system, slope_func)
 
-        height = heightAtDoor(system)
+            height = heightAtDoor(system)
+            heights.append(height)
+            print("angle =", angle, "velocity = ", velocity, "w = ", condition.w, "height at door = ", height, '\n')
 
-        print("velocity = ", velocity, "w = ", condition.w, "height at door = ", height, '\n')
-#velocitySweep(baseballSystem,velocity_array)
+        plt.plot(velocity_array, heights)
+        plt.xlabel('Velocity (m/s)')
+        plt.ylabel('Height From Ground (m)')
+        plt.title('Linear Velocity Optimization')
+        #plt.xlim([0,70])
+        #plt.ylim([0,400])
+        plt.grid(True)
+        plt.axhline(y = 2, color='r')
+
+
+    plt.show()
+
+#velocitySweep(baseballSystem,velocity_array,angle_array)
 
 plt.xlabel('x (m)')
 plt.ylabel('y (m)')
 plt.title('Ball flight Path')
-plt.xlim([0,70])
+plt.xlim([0,250])
 plt.ylim([0,400])
 plt.grid(True)
 plt.axvline(x = 2, color='r')
