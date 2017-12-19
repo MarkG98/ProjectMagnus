@@ -1,5 +1,7 @@
 from modsim import *
 from matplotlib import pyplot as plt
+import matplotlib
+import numpy as np
 
 # declare all units
 m = UNITS.meter
@@ -28,9 +30,9 @@ condition = Condition(x = 2,
                       diameter = 73e-3,
                       rho = 1.2,
                       C_d = 0.3,
-                      angle = 7,
+                      angle = 7.2,
                       velocity = 95,
-                      w = 70.97764981402517,
+                      w = 70.9397012771  ,
                       duration = 15)
 
 def make_system(condition):
@@ -132,7 +134,7 @@ def heightAtDoor(system):
 #w_ideal = solution[0]
 #print(w_ideal)
 
-angle_array = linspace(6.5, 7.5, 4)
+angle_array = linspace(0,15,26)
 
 def angleSweep(system, angle_array):
     for angle in angle_array:
@@ -149,16 +151,23 @@ def angleSweep(system, angle_array):
         print("angle = ", angle, "w = ", condition.w, "height at door = ", height, '\n')
 
 #angleSweep(baseballSystem, angle_array)
-velocity_array = linspace(94,96,11)
+velocity_array = linspace(94,96,21)
 def velocitySweep(system,velocity_array, angle_array):
+    init = State(angle = condition.angle, velocity = condition.velocity, height = -1)
+    frame = SweepFrame(columns=init.index)
+    i = 0
     for angle in angle_array:
-        heights = []
         condition.set(angle=angle)
         for velocity in velocity_array:
+            i += 1
+            temp = State(angle = angle, velocity = velocity, height = -1)
+
             """condition.set(velocity = velocity * m/s)"""
             condition.set(velocity = velocity)
+
             solution = fsolve(error_func, 60)
             spinForButt = solution[0]
+            print(spinForButt)
 
             """condition.set(w = spinForButt * radian/s)"""
             condition.set(w = spinForButt)
@@ -166,22 +175,60 @@ def velocitySweep(system,velocity_array, angle_array):
             run_odeint(system, slope_func)
 
             height = heightAtDoor(system)
-            heights.append(height)
-            print("angle =", angle, "velocity = ", velocity, "w = ", condition.w, "height at door = ", height, '\n')
+            temp.height = height
 
-        plt.plot(velocity_array, heights)
-        plt.xlabel('Velocity (m/s)')
-        plt.ylabel('Height From Ground (m)')
-        plt.title('Linear Velocity Optimization')
-        #plt.xlim([0,70])
-        #plt.ylim([0,400])
-        plt.grid(True)
-        plt.axhline(y = 2, color='r')
+            frame.loc[i] = temp
+
+            print(frame.loc[i])
+    print(frame)
+    return frame
+            #print("angle =", angle, "velocity = ", velocity, "w = ", condition.w, "height at door = ", height, '\n')
+
+#frame = velocitySweep(baseballSystem,velocity_array,angle_array)
 
 
+def colorMap(frame):
+    cmap = plt.cm.Greys
+    cmap.set_bad((1, 0, 0, 1))
+
+    c = 1
+
+    norm = matplotlib.colors.Normalize(vmin= 2)
+    funkyDuck = np.zeros((len(angle_array),len(velocity_array)))
+    for i in range(len(angle_array)):
+        for j in range(len(velocity_array)):
+            normal = frame.loc[c][2]
+            c += 1
+            if normal < 2:
+                funkyDuck[i][j] = np.nan
+            else:
+                funkyDuck[i][j] = normal
+
+
+    print(funkyDuck)
+    m = plt.matshow(funkyDuck, cmap = cmap)
+    velocities = velocity_array
+    x_pos = np.arange(len(velocities))
+    plt.xticks(x_pos, velocities, rotation='vertical')
+    plt.xlabel('Velocity (m/s)')
+
+    angles = angle_array
+    y_pos = np.arange(len(angles))
+    plt.yticks(y_pos, angles)
+    plt.ylabel('Angles (Degrees)')
+
+    fig = plt.gcf()
+    fig.colorbar(m)
+
+
+
+    plt.title('Linear Velocity Optimization', y=1.19)
     plt.show()
 
-#velocitySweep(baseballSystem,velocity_array,angle_array)
+#colorMap(frame)
+
+
+
 
 plt.xlabel('x (m)')
 plt.ylabel('y (m)')
